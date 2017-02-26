@@ -1,17 +1,25 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Objects;
+import models.constants.ResourceType;
 
 
 public class Resource {
-  private final ResourceType _type;
+
+  private final ResourceType type;
 
   public Resource(ResourceType type) {
-    _type = type;
+    this.type = type;
+  }
+
+  @JsonCreator
+  public Resource(String type) {
+    this.type = ResourceType.fromValue(type);
   }
 
   public ResourceType getType() {
-    return _type;
+    return type;
   }
 
   public static Resource ofType(ResourceType type) {
@@ -27,11 +35,11 @@ public class Resource {
       return false;
     }
     Resource that = (Resource) obj;
-    return that._type.equals(_type);
+    return that.type.equals(type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(_type);
+    return Objects.hashCode(type);
   }
 }

@@ -1,59 +1,66 @@
 package models;
 
 import com.google.common.collect.HashMultiset;
+import exceptions.NotEnoughResourcesException;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import models.constants.ResourceType;
 
 
 /**
  * Represents a collection of resources.
  */
 public class Stockpile implements Iterable<Resource> {
-  private final HashMultiset<Resource> _supplies;
+  private final HashMultiset<Resource> supplies;
 
   public Stockpile() {
-    this(Collections.EMPTY_LIST);
+    this(HashMultiset.create());
   }
 
   public static Stockpile of(ResourceType... resourceTypes) {
     List<Resource> resources = Arrays.stream(resourceTypes).map(Resource::ofType).collect(Collectors.toList());
-    return new Stockpile(resources);
+    return new Stockpile(HashMultiset.create(resources));
   }
 
-  public Stockpile(Collection<Resource> resources) {
-    _supplies = HashMultiset.create();
-    _supplies.addAll(resources);
+  public static Stockpile of(ResourceType resourceType, int count) {
+    List<Resource> resources = IntStream.range(0, count)
+        .mapToObj(i -> new Resource(resourceType)).collect(Collectors.toList());
+    return new Stockpile(HashMultiset.create(resources));
+  }
+
+  public Stockpile(HashMultiset<Resource> supplies) {
+    this.supplies = supplies;
   }
 
   public void add(Resource type, int count) {
-    _supplies.add(type, count);
+    supplies.add(type, count);
   }
 
   public int getCount(Resource resource) {
-    return _supplies.count(resource);
+    return supplies.count(resource);
   }
 
-  public void remove(Stockpile pile) {
+  public void remove(Stockpile pile) throws NotEnoughResourcesException {
     for (Resource resource : pile) {
       if (getCount(resource) < pile.getCount(resource)) {
-        throw new IllegalStateException("Not enough resources in pile to remove");
+        throw new NotEnoughResourcesException(this, pile);
       }
-      _supplies.remove(resource, pile.getCount(resource));
+      supplies.remove(resource, pile.getCount(resource));
     }
   }
 
-  public void add(Stockpile pile) {
+  public Stockpile add(Stockpile pile) {
     for (Resource resource : pile) {
-      _supplies.add(resource, pile.getCount(resource));
+      supplies.add(resource, pile.getCount(resource));
     }
+    return this;
   }
 
   @Override
   public Iterator<Resource> iterator() {
-    return _supplies.elementSet().iterator();
+    return supplies.elementSet().iterator();
   }
 }

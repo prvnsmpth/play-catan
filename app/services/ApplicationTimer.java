@@ -19,7 +19,7 @@ import play.inject.ApplicationLifecycle;
  * in the {@link Module} class to see how this happens.
  *
  * This class needs to run code when the server stops. It uses the
- * application's {@link ApplicationLifecycle} to register a stop hook.
+ * application'z {@link ApplicationLifecycle} to register a stop hook.
  */
 @Singleton
 public class ApplicationTimer {
@@ -42,7 +42,7 @@ public class ApplicationTimer {
         appLifecycle.addStopHook(() -> {
             Instant stop = clock.instant();
             Long runningTime = stop.getEpochSecond() - start.getEpochSecond();
-            Logger.info("ApplicationTimer demo: Stopping application at " + clock.instant() + " after " + runningTime + "s.");
+            Logger.info("ApplicationTimer demo: Stopping application at " + clock.instant() + " after " + runningTime + "z.");
             return CompletableFuture.completedFuture(null);
         });
     }

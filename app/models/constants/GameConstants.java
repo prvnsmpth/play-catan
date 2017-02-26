@@ -3,7 +3,6 @@ package models.constants;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import models.BuildingType;
-import models.ResourceType;
 import models.Stockpile;
 
 
@@ -26,13 +25,23 @@ public class GameConstants {
         .put(BuildingType.CITY, 4)
       .build();
 
-  public static final Stockpile ROAD_COST = Stockpile.of(ResourceType.LUMBER, ResourceType.BRICK);
+  public static final Map<ResourceType, Integer> NUM_HEXES_PER_RESOURCE = ImmutableMap.<ResourceType, Integer> builder()
+      .put(ResourceType.WOOL, 4)
+      .put(ResourceType.LUMBER, 4)
+      .put(ResourceType.GRAIN, 4)
+      .put(ResourceType.BRICK, 3)
+      .put(ResourceType.ORE, 3)
+      .build();
 
-  public static final Stockpile SETTLEMENT_COST = Stockpile.of(ResourceType.LUMBER, ResourceType.BRICK,
-      ResourceType.WOOL, ResourceType.GRAIN);
+  public static final Map<BuildingType, Stockpile> BUILDING_COSTS = ImmutableMap.<BuildingType, Stockpile> builder()
+      .put(BuildingType.ROAD, Stockpile.of(ResourceType.LUMBER, ResourceType.BRICK))
+      .put(BuildingType.SETTLEMENT, Stockpile.of(ResourceType.LUMBER, ResourceType.BRICK, ResourceType.WOOL,
+          ResourceType.GRAIN))
+      .put(BuildingType.CITY, Stockpile.of(ResourceType.ORE, ResourceType.ORE, ResourceType.ORE,
+          ResourceType.GRAIN, ResourceType.GRAIN))
+      .build();
 
-  public static final Stockpile CITY_COST = Stockpile.of(ResourceType.ORE, ResourceType.ORE, ResourceType.ORE,
-      ResourceType.GRAIN, ResourceType.GRAIN);
+  public static final Stockpile DEV_CARD_COST = Stockpile.of(ResourceType.WOOL, ResourceType.GRAIN, ResourceType.ORE);
 
   private GameConstants() {
   }

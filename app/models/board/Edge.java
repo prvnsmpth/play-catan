@@ -1,17 +1,34 @@
 package models.board;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import models.Building;
+import models.board.coords.EdgeCoords;
+
+
 public class Edge {
-  public static final int N = 0;
-  public static final int E = 1;
-  public static final int S = 2;
 
-  public final int x;
-  public final int y;
-  public final int s;
+  private final EdgeCoords coords;
 
-  public Edge(int x, int y, int s) {
-    this.x = x;
-    this.y = y;
-    this.s = s;
+  private Building road;
+
+  public Edge(EdgeCoords coords) {
+    this.coords = coords;
+  }
+
+  public Edge(EdgeCoords coords, Building road) {
+    this.coords = coords;
+    this.road = road;
+  }
+
+  public void placeRoad(Building road) {
+    this.road = road;
+  }
+
+  public Building getRoad() {
+    return road;
+  }
+
+  public EdgeCoords getCoords() {
+    return coords;
   }
 }
