@@ -1,4 +1,4 @@
-package models.stage;
+package models.game;
 
 public enum GamePhase {
   SETUP_ROUND_1,

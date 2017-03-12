@@ -1,5 +1,6 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import exceptions.NotEnoughDevCardsException;
 import exceptions.NotEnoughResourcesException;
 import java.util.ArrayList;
@@ -14,10 +15,11 @@ import models.constants.Color;
 import models.constants.DevCardType;
 import models.constants.GameConstants;
 import models.constants.ResourceType;
-import models.stage.GamePhase;
+import models.game.GamePhase;
 import org.apache.commons.lang3.tuple.Pair;
 
 
+@JsonFilter("filter")
 public class Game {
 
   private Long id;
@@ -46,13 +48,14 @@ public class Game {
     phase = GamePhase.SETUP_ROUND_1;
   }
 
+  public Board getBoard() {
+    return board;
+  }
+
   private Stockpile initBank() {
     Stockpile bank = new Stockpile();
-
-    // Add resources
     Arrays.stream(ResourceType.values())
         .forEach(t -> bank.add(new Resource(t), GameConstants.MAX_NUM_RESOURCES_PER_TYPE));
-
     return bank;
   }
 
@@ -61,6 +64,12 @@ public class Game {
     GameConstants.NUM_DEV_CARDS.entrySet().stream()
         .forEach(en -> stack.add(new DevCard(en.getKey()), en.getValue()));
     return stack;
+  }
+
+  private void assertOrThrow(boolean condition, String msg) {
+    if (!condition) {
+      throw new IllegalStateException(msg);
+    }
   }
 
   public void setId(Long id) {
@@ -171,18 +180,48 @@ public class Game {
 
   public void build(BuildingType buildingType, Coords coords) throws NotEnoughResourcesException {
     Player currentPlayer = getCurrentPlayer();
+    assertOrThrow(currentPlayer != null, "No players in the game.");
+    assertOrThrow(buildingType != BuildingType.CITY, "Nice try");
+
+    int points = currentPlayer.getVictoryPoints();
     Building building = currentPlayer.removeBuilding(buildingType);
-
-    if (currentPlayer.getVictoryPoints() >= 2) {
-      Stockpile buildingCost = building.getBuildingCost();
-      currentPlayer.exportResources(buildingCost);
-      bank.add(buildingCost);
+    switch (phase) {
+      case SETUP_ROUND_1:
+        if (points == 0) {
+          assertOrThrow(buildingType == BuildingType.SETTLEMENT, "Have to build a settlement now.");
+        } else if (points == 1) {
+          assertOrThrow(buildingType == BuildingType.ROAD, "Have to build a road now.");
+        }
+        if (buildingType == BuildingType.ROAD) {
+          if (currentPlayerPos == players.size() - 1) {
+            phase = GamePhase.SETUP_ROUND_2;
+          } else {
+            currentPlayerPos++;
+          }
+        }
+        break;
+      case SETUP_ROUND_2:
+        assertOrThrow(points == 1 && buildingType == BuildingType.SETTLEMENT, "Have to build a settlement now.");
+        assertOrThrow(points == 2 && buildingType == BuildingType.ROAD, "Have to build a road now.");
+        if (buildingType == BuildingType.ROAD) {
+          if (currentPlayerPos == 0) {
+            phase = GamePhase.BEFORE_TURN;
+          } else {
+            currentPlayerPos--;
+          }
+        }
+        break;
+      case TRADING_AND_BUILDING:
+        Stockpile buildingCost = building.getBuildingCost();
+        currentPlayer.exportResources(buildingCost);
+        bank.add(buildingCost);
+        break;
+      default:
+        throw new IllegalStateException("Can't build now");
     }
-
-    if (building.getType() != BuildingType.ROAD) {
+    if (buildingType == BuildingType.SETTLEMENT) {
       currentPlayer.awardVictoryPoint();
     }
-
     board.build(building, coords);
   }
 

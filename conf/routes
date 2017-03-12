@@ -3,8 +3,10 @@
 # ~~~~
 
 GET     /new                         controllers.GameController.newGame
-GET     /game                        controllers.GameController.game
-GET     /state                       controllers.GameController.gameState
+GET     /play                        controllers.GameController.play
+
+GET     /game/:id                   controllers.GameController.gameState(id: Int)
+GET     /game/:id/board              controllers.GameController.boardState(id: Int)
 
 POST    /addPlayer                   controllers.GameController.addPlayer
 POST    /start                       controllers.GameController.start

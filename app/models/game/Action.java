@@ -1,4 +1,4 @@
-package models.stage;
+package models.game;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

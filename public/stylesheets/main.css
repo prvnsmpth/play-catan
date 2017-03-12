@@ -1,6 +1,27 @@
 body {
   margin: 0;
+  font-family: "Helvetica Neue"
 }
 canvas {
 
+}
+
+.color-red {
+  color: red
+}
+.color-white {
+  color: white;
+}
+.color-blue {
+  color: blue;
+}
+.color-orange {
+  color: orange;
+}
+.player-name {
+  text-shadow: 1px 1px 1px #000;
+}
+
+.player-controls {
+  padding: 20px
 }

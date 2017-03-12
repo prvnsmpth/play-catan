@@ -15,7 +15,7 @@ public class VertexCoords extends Coords {
   public List<TileCoords> getSurroundingTiles() {
     List<TileCoords> sTiles = new ArrayList<>();
 
-    // The vertex'z home tile
+    // The vertex's home tile
     TileCoords homeTile = new TileCoords(x, y);
     sTiles.add(homeTile);
 
