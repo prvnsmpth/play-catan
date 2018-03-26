@@ -43,4 +43,14 @@ class Vertex {
     return Math.abs(this.x - x) + Math.abs(this.y - y) <= threshold;
   }
 
+  /**
+   * Distance to a canvas point (x, y).
+   *
+   * @param x
+   * @param y
+   */
+  dist(x, y) {
+    return Math.abs(this.x - x) + Math.abs(this.y - y);
+  }
+
 }

@@ -1,24 +1,9 @@
 var Game = Backbone.Model.extend({
   urlRoot: '/game',
 
-  initialize: function() {
-    var settings = {
-      hexRadius: 75,
-      tokenRadius: 20,
-      settlementSize: 36,
-      roadLength: 45,
-      roadThickness: 12,
-      distThreshold: 40,
-      hexColors: {
-        GRAIN: 'yellow',
-        ORE: 'grey',
-        BRICK: 'red',
-        LUMBER: '#05c40f',
-        WOOL: '#9bffa0'
-      }
-    };
+  initialize: function(options) {
     this.board = new Board({
-      settings: settings,
+      settings: options.settings,
       parent: this
     });
   },
@@ -32,20 +17,20 @@ var Game = Backbone.Model.extend({
   },
 
   /**
-   * Checks if the current player can place a settlement/city at a vertex.
+   * Checks if the current player can place a settlement/city/road at a vertex/edge.
    *
-   * @param vertex The vertex where the player is attempting to place
-   * @param buildingType Whether it is a settlement or a city.
+   * @param coord The vertex/edge where the player is attempting to place
+   * @param buildingType Whether it is a settlement, city or road.
    */
-  canPlace: function(vertex, buildingType) {
+  canPlace: function(coords, buildingType) {
     var currentPlayer = this.getCurrentPlayer();
-    var building = this.board.buildingAt(vertex);
     switch (buildingType) {
       case 'SETTLEMENT':
+        var building = this.board.buildingAt(coords);
         if (building !== null) {
           return false;
         }
-        var adjBuildings = vertex.adjVertices
+        var adjBuildings = coords.adjVertices
             .filter(v => this.board.isValidVertex(v))
             .map(v => this.board.buildingAt(v))
             .filter(building => building !== null);
@@ -54,11 +39,14 @@ var Game = Backbone.Model.extend({
         }
         break;
       case 'CITY':
+        var building = this.board.buildingAt(coords);
         if (building == null ||
             building.color !== currentPlayer.color ||
             building.type !== 'SETTLEMENT') {
           return false;
         }
+        break;
+      case 'ROAD':
         break;
     }
     return true;
@@ -78,19 +66,70 @@ var GameView = Backbone.View.extend({
       parent: this
     });
     this.template = options.template;
+    this.assetQueue = this.loadAssets();
+
+    this.on('buildingPlaced', this.buildingPlaced);
+  },
+
+  loadAssets: function() {
+    var assetQueue = new createjs.LoadQueue();
+    var settings = this.model.get('settings');
+    var colors = settings.playerColors;
+    var buildingTypes = settings.buildingTypes;
+    var assetManifest = [];
+    colors.forEach(c => {
+      buildingTypes.forEach(type => {
+        assetManifest.push({
+          id: `${type}-${c}`,
+          src: `/assets/images/${type}-${c}.png`
+        })
+      });
+    });
+    assetQueue.loadManifest(assetManifest);
+    return assetQueue;
   },
 
   events: {
-    'click .settlement-button': 'settlementButtonClicked'
+    'click .build-button': 'buildButtonClicked',
   },
 
-  settlementButtonClicked: function () {
-    $('body').css({cursor: 'url(/assets/images/settlement-red.png) 10 10, auto'});
+  buildButtonClicked: function (evt) {
+    var button = evt.target;
+    if ($(button).hasClass('active')) {
+      $('.build-button').prop('disabled', false);
+      $('body').css({cursor: 'auto'});
+      this.board.trigger('buildCancelled');
+    } else {
+      var currentPlayer = this.model.getCurrentPlayer();
+      var playerColor = currentPlayer.color;
+      var buildingType = $(evt.target).data('role');
+
+      var icon = this.assetQueue.getItem(buildingType + '-' + playerColor);
+      $('body').css({cursor: 'url(' + icon.src + ') 10 10, auto'});
+      this.board.trigger('showBuildingSelector', {
+        player: currentPlayer, buildingType: buildingType
+      });
+      // Disable other buttons
+      $('.build-button').each(function () {
+        if (this !== evt.target) {
+          $(this).prop('disabled', true);
+        }
+      });
+    }
+    $(button).toggleClass('active');
+  },
+
+  /**
+   * Handles the event triggered after a player places a building (settlement, city or road).
+   */
+  buildingPlaced: function() {
+    $('body').css({cursor: 'auto'});
+    $('.build-button').removeClass('active').prop('disabled', false);
+    this.board.render();
   },
 
   render: function() {
-    var currentPlayerPos = this.model.get('currentPlayerPos');
-    var player = this.model.get('players')[currentPlayerPos];
+    var player = this.model.getCurrentPlayer();
     var html = this.template(player);
     this.$('#player-controls').html(html);
     return this;

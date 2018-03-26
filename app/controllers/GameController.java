@@ -38,12 +38,6 @@ public class GameController extends Controller {
   @Inject
   public GameController(ActorSystem actorSystem) {
     refreshGameState();
-    if (game == null) {
-      logger.info("Error refreshing game state from local file, initializing new game.");
-      game = new Game();
-      saveGameState();
-    }
-
     this.actorSystem = actorSystem;
   }
 
@@ -76,7 +70,7 @@ public class GameController extends Controller {
   public Result newGame() {
     game = new Game();
     saveGameState();
-    return redirect("game");
+    return redirect("play");
   }
 
   @BodyParser.Of(BodyParser.Json.class)
@@ -110,7 +104,7 @@ public class GameController extends Controller {
       ObjectWriter writer = mapper.writer(new SimpleFilterProvider().addFilter("filter",
           SimpleBeanPropertyFilter.filterOutAllExcept("currentPlayerPos")));
       return ok(Json.parse(writer.writeValueAsString(game)));
-    } catch (NotEnoughResourcesException | IllegalStateException | JsonProcessingException e) {
+    } catch (NotEnoughResourcesException | IllegalStateException | IllegalArgumentException | JsonProcessingException e) {
       refreshGameState();
       logger.error("Something went wrong", e);
       return badRequest("Illegal operation: " + e.getMessage());
@@ -136,6 +130,9 @@ public class GameController extends Controller {
   }
 
   public Result gameState(Integer id) {
+    if (game == null) {
+      return notFound();
+    }
     return ok(Json.toJson(game));
   }
 
